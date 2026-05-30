@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Eisenhower Matrix - Smart Task Prioritizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', sans-serif;
+        }
+        body {
+            background: #eef2f5;
+            margin: 0;
+            padding: 24px 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.9rem;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        h1 small {
+            font-size: 0.8rem;
+            font-weight: normal;
+            background: #d9e2e8;
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+        .sub {
+            color: #2c5f4e;
+            margin-bottom: 28px;
+            border-left: 4px solid #f5b042;
+            padding-left: 16px;
+            font-weight: 500;
+        }
+        /* Form tambah tugas */
+        .task-form {
+            background: white;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 32px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 2;
+            min-width: 180px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            color: #4a6f61;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 20px;
+            border: 1px solid #cbdde6;
+            font-size: 0.9rem;
+            background: #fefefe;
+        }
+        button {
+            background: #2c5f4e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover {
+            background: #1f473a;
+            transform: scale(0.98);
+        }
+        .reset-btn {
+            background: #b1624b;
+        }
+        .reset-btn:hover {
+            background: #944d37;
+        }
+        /* Grid 2x2 Eisenhower */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .quadrant {
+            background: white;
+            border-radius: 28px;
+            padding: 0;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .quadrant-header {
+            padding: 16px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+        }
+        .do-first {
+            background: #ffefdb;
+            border-left: 6px solid #e67e22;
+        }
+        .schedule {
+            background: #e3f5ec;
+            border-left: 6px solid #2c9b6e;
+        }
+        .delegate {
+            background: #ffe6e5;
+            border-left: 6px solid #e67c6e;
+        }
+        .eliminate {
+            background: #ecf0f1;
+            border-left: 6px solid #95a5a6;
+        }
+        .task-list {
+            min-height: 220px;
+            padding: 12px 12px 20px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: 0.1s;
+        }
+        .task-text {
+            flex: 1;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .task-actions button {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 30px;
+            background: #f2f2f2;
+            color: #2c3e2b;
+        }
+        .task-actions button.edit-task {
+            background: #fdf0d8;
+        }
+        .task-actions button.delete-task {
+            background: #f7e2de;
+            color: #c23b22;
+        }
+        .empty-message {
+            color: #8dab9e;
+            text-align: center;
+            padding: 28px 12px;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+        footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 0.75rem;
+            color: #6e9283;
+        }
+        @media (max-width: 720px) {
+            .matrix-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            .task-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 48px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        📋 Eisenhower Priority Matrix 
+        <small>smart task prioritizer</small>
+    </h1>
+    <div class="sub">Urgensi vs Kepentingan — fokus pada yang paling penting dan mendesak</div>
+
+    <div class="legend">
+        <span>🟠 Do First → urgent + penting</span>
+        <span>🟢 Schedule → tidak urgent + penting</span>
+        <span>🔴 Delegate → urgent + tidak penting</span>
+        <span>⚪ Eliminate → tidak urgent + tidak penting</span>
+    </div>
+
+    <!-- Form tambah tugas -->
+    <div class="task-form">
+        <div class="form-group" style="flex:3">
+            <label>📌 Nama tugas / kegiatan</label>
+            <input type="text" id="taskNameInput" placeholder="Contoh: Menyusun proposal skripsi">
+        </div>
+        <div class="form-group">
+            <label>⏰ Urgensi</label>
+            <select id="urgencySelect">
+                <option value="high">Tinggi (harus segera)</option>
+                <option value="low">Rendah (bisa nanti)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>🎯 Kepentingan</label>
+            <select id="importanceSelect">
+                <option value="high">Tinggi (berdampak besar)</option>
+                <option value="low">Rendah (dampak kecil)</option>
+            </select>
+        </div>
+        <button id="addTaskBtn">+ Tambah tugas</button>
+        <button id="resetAllBtn" class="reset-btn" style="background:#b1624b;">🗑️ Reset semua data</button>
+    </div>
+
+    <!-- MATRIX 2x2 -->
+    <div class="matrix-grid">
+        <!-- KUADRAN 1: DO FIRST (urgent + important) -->
+        <div class="quadrant">
+            <div class="quadrant-header do-first">🔥 DO FIRST — Kerjakan Sekarang</div>
+            <div class="task-list" id="doFirstList"></div>
+        </div>
+        <!-- KUADRAN 2: SCHEDULE (not urgent + important) -->
+        <div class="quadrant">
+            <div class="quadrant-header schedule">📅 SCHEDULE — Jadwalkan</div>
+            <div class="task-list" id="scheduleList"></div>
+        </div>
+        <!-- KUADRAN 3: DELEGATE (urgent + not important) -->
+        <div class="quadrant">
+            <div class="quadrant-header delegate">🤝 DELEGATE — Delegasikan / Bantu Orang</div>
+            <div class="task-list" id="delegateList"></div>
+        </div>
+        <!-- KUADRAN 4: ELIMINATE (not urgent + not important) -->
+        <div class="quadrant">
+            <div class="quadrant-header eliminate">🗑️ ELIMINATE — Hindari / Coret</div>
+            <div class="task-list" id="eliminateList"></div>
+        </div>
+    </div>
+    <footer>💾 Semua tugas tersimpan otomatis di browser kamu. Tugas yang sudah di-eliminate bisa dihapus permanen. Prioritaskan hidupmu!</footer>
+</div>
+
+<script>
+    // --- Data Model ---
+    let tasks = [];  // each task: { id, text, urgency, importance }
+
+    // DOM elements
+    const taskNameInput = document.getElementById('taskNameInput');
+    const urgencySelect = document.getElementById('urgencySelect');
+    const importanceSelect = document.getElementById('importanceSelect');
+    const addBtn = document.getElementById('addTaskBtn');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+
+    // kuadran container
+    const doFirstDiv = document.getElementById('doFirstList');
+    const scheduleDiv = document.getElementById('scheduleList');
+    const delegateDiv = document.getElementById('delegateList');
+    const eliminateDiv = document.getElementById('eliminateList');
+
+    // Helper: menentukan kuadran berdasarkan urgency & importance
+    function getQuadrant(urgency, importance) {
+        if (urgency === 'high' && importance === 'high') return 'doFirst';
+        if (urgency === 'low' && importance === 'high') return 'schedule';
+        if (urgency === 'high' && importance === 'low') return 'delegate';
+        return 'eliminate'; // low urgency & low importance
+    }
+
+    // Render semua tugas ke masing-masing kuadran
+    function renderAll() {
+        // Kosongkan dulu container
+        doFirstDiv.innerHTML = '';
+        scheduleDiv.innerHTML = '';
+        delegateDiv.innerHTML = '';
+        eliminateDiv.innerHTML = '';
+
+        // Kelompokkan tugas berdasarkan kuadran
+        const quadrants = { doFirst: [], schedule: [], delegate: [], eliminate: [] };
+        tasks.forEach(task => {
+            const quadrant = getQuadrant(task.urgency, task.importance);
+            quadrants[quadrant].push(task);
+        });
+
+        // Fungsi untuk me-render satu daftar tugas
+        function renderList(container, taskArray, quadrantName) {
+            if (taskArray.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'empty-message';
+                emptyMsg.innerText = '✨ Tidak ada tugas di sini. Tambah tugas baru!';
+                container.appendChild(emptyMsg);
+                return;
+            }
+            taskArray.forEach(task => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'task-card';
+                taskCard.setAttribute('data-id', task.id);
+
+                // teks tugas
+                const taskTextSpan = document.createElement('span');
+                taskTextSpan.className = 'task-text';
+                taskTextSpan.innerText = task.text;
+
+                // tombol action
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'task-actions';
+
+                // edit button
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '✏️';
+                editBtn.title = 'Edit tugas';
+                editBtn.classList.add('edit-task');
+                editBtn.onclick = () => editTask(task.id);
+
+                // delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = 'Hapus tugas';
+                deleteBtn.classList.add('delete-task');
+                deleteBtn.onclick = () => deleteTaskById(task.id);
+
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(deleteBtn);
+                taskCard.appendChild(taskTextSpan);
+                taskCard.appendChild(actionsDiv);
+                container.appendChild(taskCard);
+            });
+        }
+
+        renderList(doFirstDiv, quadrants.doFirst, 'doFirst');
+        renderList(scheduleDiv, quadrants.schedule, 'schedule');
+        renderList(delegateDiv, quadrants.delegate, 'delegate');
+        renderList(eliminateDiv, quadrants.eliminate, 'eliminate');
+    }
+
+    // Simpan ke localStorage
+    function saveToLocalStorage() {
+        localStorage.setItem('eisenhower_tasks', JSON.stringify(tasks));
+    }
+
+    // Load dari localStorage
+    function loadFromLocalStorage() {
+        const stored = localStorage.getItem('eisenhower_tasks');
+        if (stored) {
+            tasks = JSON.parse(stored);
+        } else {
+            // data contoh untuk demo
+            tasks = [
+                { id: Date.now() + 1, text: '📝 Menyelesaikan draft proposal skripsi', urgency: 'high', importance: 'high' },
+                { id: Date.now() + 2, text: '📖 Baca jurnal untuk tugas akhir', urgency: 'low', importance: 'high' },
+                { id: Date.now() + 3, text: '📧 Balas email admin beasiswa', urgency: 'high', importance: 'low' },
+                { id: Date.now() + 4, text: '📱 Scroll medsos berlebihan', urgency: 'low', importance: 'low' },
+            ];
+        }
+        renderAll();
+    }
+
+    // Tambah tugas baru
+    function addTask() {
+        const text = taskNameInput.value.trim();
+        if (text === '') {
+            alert('Nama tugas tidak boleh kosong!');
+            return;
+        }
+        const urgency = urgencySelect.value;
+        const importance = importanceSelect.value;
+        const newTask = {
+            id: Date.now(),
+            text: text,
+            urgency: urgency,
+            importance: importance
+        };
+        tasks.push(newTask);
+        saveToLocalStorage();
+        renderAll();
+        // reset form
+        taskNameInput.value = '';
+        urgencySelect.value = 'high';
+        importanceSelect.value = 'high';
+    }
+
+    // Edit tugas (popup sederhana)
+    function editTask(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const newText = prompt('Edit nama tugas:', task.text);
+        if (newText === null || newText.trim() === '') return;
+        task.text = newText.trim();
+
+        const newUrgency = prompt(`Ubah urgensi? (ketik "high" untuk Tinggi, "low" untuk Rendah)\nSaat ini: ${task.urgency === 'high' ? 'Tinggi' : 'Rendah'}`, task.urgency);
+        if (newUrgency === 'high' || newUrgency === 'low') task.urgency = newUrgency;
+
+        const newImportance = prompt(`Ubah kepentingan? (ketik "high" untuk Tinggi, "low" untuk Rendah)\nSaat ini: ${task.importance === 'high' ? 'Tinggi' : 'Rendah'}`, task.importance);
+        if (newImportance === 'high' || newImportance === 'low') task.importance = newImportance;
+
+        saveToLocalStorage();
+        renderAll();
+    }
+
+    // Hapus tugas
+    function deleteTaskById(taskId) {
+        if (confirm('Hapus tugas ini?')) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            saveToLocalStorage();
+            renderAll();
+        }
+    }
+
+    // Reset semua data
+    function resetAllTasks() {
+        if (confirm('⚠️ PERINGATAN: Semua tugas akan dihapus permanen. Lanjutkan?')) {
+            tasks = [];
+            saveToLocalStorage();
+            renderAll();
+        }
+    }
+
+    // Event listeners
+    addBtn.addEventListener('click', addTask);
+    resetAllBtn.addEventListener('click', resetAllTasks);
+    // Optional: tekan Enter pada input nama tugas
+    taskNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTask();
+    });
+
+    // Initial load
+    loadFromLocalStorage();
+</script>
+</body>
+</html>
